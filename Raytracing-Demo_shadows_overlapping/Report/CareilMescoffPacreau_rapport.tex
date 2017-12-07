@@ -1,0 +1,94 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{fullpage}
+
+\author{Victor Careil, Guillaume Mescoff, Grégoire Pacreau}
+\title{Projet 3: Lancer de rayon}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+Dans ce projet nous implémentons une modélisation de la lumière par lancé de rayon dans un monde ayant pour seul objet des boules.
+
+\end{abstract}
+
+\section*{Introduction}
+
+Le lancer de rayon est une technique visant à reproduire de façon réaliste la lumière dans une image de synthèse. Elle se base sur une vision classique de la lumière, qui est réduite à un ensemble de rayons projetés par une source. Elle utilise les principes de retour inverse de la lumière énoncé par Fermat et les lois de l'optique de Snell-Descartes. Cette technique donne des rendus réalistes et est utilisée dans les logiciels de traitement d'image et de modélisation 3D comme Blender (www.blender.org).
+
+Pour ce projet on prendra tantôt une source à l'infini tantôt une source ponctuelle. Notre espace contiendra un plan faisant figure de sol ainsi que des boules. On s'y limitera afin de n'avoir aucune arête dans notre espace et ainsi simplifier notre problème.
+
+\section{L'implémentation du lancer de rayon}
+
+\subsection{Principe de l'implémentation}
+
+On place des objets et un observateur dans l'espace. L'image qu'on souhaite obtenir se situe au niveau de l'observateur. Une source de lumière à l'infini sera paramétrée par un vecteur indiquant l'inclinaison des rayons, on supposera que les rayons ne subisse aucune diffusion. Une source ponctuelle sera elle paramétrée par son origine et subira de la diffusion.
+
+On remarque que calculer la trajectoire de l'infinité de rayons issus de la source est inutile puisque seule une partie sera observée et donc figurera dans l'image. On invoque donc le principe de retour inverse de la lumière pour calculer à la place les rayons atteignant l'observateur. Pour chaque rayon partant de l'observateur on cherche la paroi la plus proche qu'il croise puisqu'il s'y réfléchira. S'il n'en croise aucune alors ce rayon ne provient pas d'une source lumineuse et donc sera noir. S'il croise un objet alors on applique la loi de Snell-Descartes décrivant la réflexion pour trouver la direction du rayon réfléchi, puis on vérifie que ce dernier ne rencontre pas d'obstacle. Si ce n'est pas le cas on détermine l'intensité du rayon lumineux parvenant à l'observateur.
+
+\subsection{Réflexion d'un rayon sur une boule}
+
+\subsubsection{Trouver le point de réflexion}
+
+Pour implémenter le lancer de rayon on commence par modéliser ce qu'il se passe pour un rayon unique. Le rayon est paramétré par une origine $A$ et un vecteur direction $\vec{u}$. On s'intéresse à son intersection avec une boule paramétrée par un centre $C$ et un rayon $R$. L'équation de leur intersection est le polynôme du second degré:
+\[\vert \vert \vec{AC} - t \vec{u}\vert \vert^2 = R^2\]
+qui en développant devient:
+\[t^2-2<\vec{AB},\vec{u}>*t+(\vert\vert \vec{AC}\vert\vert^2-R^2) = 0\]
+où t est un paramétrage des points d'intersection sur la droite issue du point $A$ et du vecteur $\vec{u}$, les solutions sont donc de la forme $A+t\vec{u}$. On remarque que si $\Delta$ le déterminant du polynôme nous informe de la nature de l'intersection:
+\begin{itemize}
+\item $\Delta < 0$: le rayon ne croise pas la boule;
+\item $\Delta = 0$: le rayon est tangent à la boule, il n'y a pas de réflexion donc on considère qu'il n'y a pas d'intersection;
+\item $\Delta > 0$: la droite traverse la boule, le point le plus proche de l'observateur est le point où le rayon se réfléchi.
+\end{itemize}
+
+\subsubsection{Calculer l'intensité du rayon avec une source à l'infini sans diffusion}
+
+On a un rayon allant d'un objet vers un observateur et le point où il se réfléchi. On cherche à trouver le rayon incident pour déterminer l'intensité de la lumière parvenant à l'observateur.
+
+D'après les lois de Snell-Descartes le rayon incident et le rayon réfléchi ont pour bissectrice la normale de la surface au point de réflexion. On peut aisément trouver le vecteur normal  à partir du point de réflexion $I$: $\vec{n} = \frac{(C-I)}{\vert\vert C-I\vert\vert}$. Dès lors on obtient le vecteur directeur $\vec{i}$ du rayon incident:
+\[\vec{i}=2<-\vec{u},\vec{n}>\vec{n}-\vec{u}\]
+
+Comme on a de plus le point de réflexion, on a paramétré le rayon incident. On compare alors ce dernier aux rayons issus de la source pour déterminer l'intensité du rayon parvenant à l'observateur. On défini l'intensité comme un facteur entre 0 et 1 qu'on multipliera aux composantes RGB donnant la couleur de l'objet observé. Dans le cas d'une source à l'infini, il suffit de prendre le produit scalaire de $\vec{i}$ et de la direction des rayons lumineux.
+
+\subsubsection{Calculer l'intensité du rayon avec une source ponctuelle avec diffusion}
+
+On pose I l'intensité de la source lumineuse à son origine. Soit $\vec{n}$ le vecteur directeur de la normale à la sphère au point de réflexion et soit $\vec{i}$ le vecteur directeur de la droite liant le point lumineux au point de réflexion. Soit $r$ la distance du point de réflexion au point lumineux. On a alors:
+\[I(r) = \frac{I}{r^2}*\max (0,<\vec{n},\vec{i}>)\]
+le maximum servant à éliminer les rayons ne se dirigeant pas vers la source.
+
+On multiplie ensuite $I(r)$ aux composantes RGB de la couleur.
+
+\subsection{Généralisation à plusieurs rayons et plusieurs sources}
+
+\subsubsection{Plusieurs rayons}
+
+\begin{figure}
+	\centering
+	\includegraphics[scale=0.2]{schema_oeil5.jpg}
+	\caption{L'oeil observe les rayons à l'infini}
+	\label{oeil}
+\end{figure}
+
+On généralise aisément à plusieurs rayons: pour chaque pixel apparaissant sur l'écran, on trace un rayon perpendiculaire à l'écran et on applique l'algorithme déterminé pour un rayon unique. Supposer que l'observateur est un écran n'observant que les rayons perpendiculaires est une bonne approximation d'une caméra ou de l'œil humain (figure \ref{oeil}). 
+
+\subsubsection{Plusieurs sources}
+
+Pour considérer plusieurs sources on calcule séparément les rayons de chaque source de lumière puis on additionne les couleurs issus des sources, simulant ainsi la synthèse additive. On vérifie évidement que les valeurs de RGB ne dépassent pas 255 ce faisant.
+
+\section{Shading}
+
+\section*{Conclusion}
+
+\section*{Auto-évaluation}
+
+\end{document}
