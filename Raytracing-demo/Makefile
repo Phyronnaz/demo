@@ -7,7 +7,7 @@ SCREEN_DIR	:= ./Screen
 SCENE_DIR   := ./Scene
 
 CC	:= g++
-CFLAGS	:= -W -Wall -ansi -std=c++14  $(SDL_CFLAGS)
+CFLAGS	:= -W -Wall -ansi -pthread -std=c++14  $(SDL_CFLAGS)
 LDFLAGS	:=
 
 INCLS	:= -I. -I$(SCREEN_DIR) -I$(SCENE_DIR)
