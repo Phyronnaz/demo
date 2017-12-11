@@ -27,7 +27,7 @@ all: $(TARGET)
 # https://www.gnu.org/software/make/manual/make.html#Automatic-Variables
 
 $(TARGET): $(O_FILES) Makefile
-	$(CC) $(LDFLAGS) $(O_FILES) $(LIBS) -o $@
+	$(CC) $(LDFLAGS) -pthread $(O_FILES) $(LIBS) -o $@
 
 $(O_FILES): %.o: %.cpp Makefile $(HPP_FILES)
 	$(CC) $(CFLAGS) $(INCLS) -c $< -o $@
