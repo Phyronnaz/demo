@@ -38,7 +38,7 @@ $(O_FILES): %.o: %.cpp Makefile $(HPP_FILES)
 # https://www.gnu.org/software/make/manual/make.html#Include
 
 main.dep: $(CPP_FILES) $(HPP_FILES)
-	gcc -MM -std=c++14 $(INCLS) $^ > main.dep
+	gcc -MM -std=c++14 -pthread $(INCLS) $^ > main.dep
 
 include main.dep
 
